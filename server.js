@@ -1,5 +1,9 @@
-const app = require("./app");
 
-app.listen( process.env.PORT, () => {
-    console.log('Servidor corriendo en puerto', process.env.PORT);
-})
+const app = require('./app');
+
+async function main() {
+    await app.listen(3000);
+    console.log('Server on port', 3000);
+}
+
+main();
