@@ -12,10 +12,9 @@ app.use(express.urlencoded({ extended: false }));
 
 
 // app.use((res, next) => {
-//     res.append('Access-Control-Allow-Origin', '*');
-//     res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//     res.append('Access-Control-Allow-Headers', 'Content-Type');
-//     next();
+    // res.header('Access-Control-Allow-Origin', '*');
+    // res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    // res.header('Access-Control-Allow-Headers', 'Content-Type');
 // });
 
 
@@ -23,6 +22,10 @@ app.use(express.urlencoded({ extended: false }));
 const othelloController = require('./controllers/othelloController');
 
 // Rutas
-app.use( othelloController );
+app.get('/', (req, res) => {
+    res.send(200)
+})
+
+app.use(othelloController );
    
-module.exports = app;
+module.exports = app;   
