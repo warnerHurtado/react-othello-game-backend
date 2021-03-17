@@ -1,23 +1,43 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-a9d71ab2a9');
+const generateUniqueId = require('generate-unique-id');
 
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: 'https://othello-game-2c179-default-rtdb.firebaseio.com/'
-});
-
-const db = admin.database();
-
-
-exports.testing = async (req) => {
-    console.log(req)
-    db.ref('probando').once('value', (snapshot) => {
-        data = snapshot.val();
-
-        console.log(data)
+const idGenerator = () => {
+    return generateUniqueId({
+        length: 10,
+        useLetters: true,
+        useNumbers: true
     })
-    //db.ref('probando').push({ name: 'Warner', last: 'Hurtado' });
+}
+
+
+// db.ref('probando').once('value', ( snapshot ) => {
+//     data = snapshot.val();
+//     console.log(data)
+// });
+
+
+exports.testing = async (req, res) => {
+
+    try {
+        const db = admin.database();
+        const idGame = idGenerator();
+        const squareTest = [['X', null, null, null, null], ['X', null, null, null, null], ['X', null, null, null, null]]
+        db.ref('games').push(
+            {
+                id: idGame,
+                squares: flatten(squareTest),
+                xPlayed: true
+            }
+        ).then(response => {
+            console.log(response)
+        })
+
+
+    } catch (e) {
+        console.log(e)
+    }
+
+
 }
 
 
