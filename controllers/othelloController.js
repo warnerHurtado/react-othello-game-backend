@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-//const gameManager = require('../managers/othelloManager')
 const firebase = require('firebase-admin')
 const status = require('http-status');
 const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-a9d71ab2a9');
@@ -16,14 +15,6 @@ firebase.initializeApp({
 
 var db = firebase.firestore();
 
-
-const idGenerator = () => {
-    return generateUniqueId({
-        length: 10,
-        useLetters: true,
-        useNumbers: true
-    })
-}
 
 
 
