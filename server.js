@@ -1,18 +1,13 @@
 const app = require('./app');
-const firebase = require('firebase-admin')
 
-// // firebase.initializeApp({
-// //     credential: firebase.credential.cert(serviceAccount),
-// //     databaseURL: 'https://othello-game-2c179-default-rtdb.firebaseio.com/'
-// // });
+const http = require('http');
 
+const port = process.env.PORT || 3000;
+const hostname = process.env.HOST || 'localhost';
 
 
+const server = http.createServer(app);
 
-
-function main() {
-    app.listen(3000)
-    console.log('Server running on localhost:3000')
-}
-
-main()
+server.listen(port, hostname, () => {
+    console.log(`El servidor se está ejecutando en http://${hostname}:${port}/`);
+});

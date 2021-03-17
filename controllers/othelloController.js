@@ -39,7 +39,7 @@ function boardGenerator() {
 router.get('/newGame', (req, res) => {
 
     var db = firebase.firestore();
-
+    
     db.collection('games').add({
         boardGame: boardGenerator(),
         xPlay: true
