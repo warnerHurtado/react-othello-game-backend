@@ -13,7 +13,6 @@ firebase.initializeApp({
 });
 
 
-var db = firebase.firestore();
 
 
 
@@ -38,6 +37,9 @@ function boardGenerator() {
 
 
 router.get('/newGame', (req, res) => {
+
+    var db = firebase.firestore();
+
     db.collection('games').add({
         boardGame: boardGenerator(),
         xPlay: true
@@ -50,21 +52,50 @@ router.get('/newGame', (req, res) => {
 
 
 router.get('/getGame', async (req, res) => {
-    
-    const idGame = req.query.idGame;
-    if ( idGame ) {
-        const gameRef = db.collection('games').doc(idGame);
-        const docGame = await gameRef.get();
-        if ( docGame ) {
-            res.status(status.OK).json({ game: docGame.data() });
+
+    try {
+        var db = firebase.firestore();
+        const idGame = req.query.idGame;
+
+        if (idGame) {
+            const gameRef = db.collection('games').doc(idGame);
+            const docGame = await gameRef.get();
+            if (docGame) {
+                res.status(status.OK).json({ game: docGame.data() });
+            } else {
+                res.status(status.INTERNAL_SERVER_ERROR).status({ err: 'Este id del juego es inválido' })
+            }
         } else {
-            res.status(status.INTERNAL_SERVER_ERROR).status({ err: 'Este id del juego es inválido' })
+            res.status(status.INTERNAL_SERVER_ERROR).status({ error: 'No se ha enviado el id del juego' })
         }
-    } else {
-        res.status(status.INTERNAL_SERVER_ERROR).status({ error: 'No se ha enviado el id del juego' })
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 });
 
+
+router.post('/editGame', async (req, res) => {
+
+    const idGame = req.body.idGame;
+    const boardGame = req.body.boardGame;
+    const xPlay = req.body.xPlay;
+
+    try {
+        var db = firebase.firestore();
+        db.collection('games').doc(idGame).update({
+            boardGame: JSON.parse(boardGame),
+            xPlay: JSON.parse(xPlay.toLowerCase())
+        }).then(response => {
+            res.status(status.OK).json({ res: response });
+        }).catch(err => {
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err })
+        });
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err })
+    }
+
+
+})
 
 
 module.exports = router;
