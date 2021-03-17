@@ -18,24 +18,25 @@ const idGenerator = () => {
 
 exports.testing = async (req, res) => {
 
-    try {
-        const db = admin.database();
-        const idGame = idGenerator();
-        const squareTest = [['X', null, null, null, null], ['X', null, null, null, null], ['X', null, null, null, null]]
-        db.ref('games').push(
-            {
-                id: idGame,
-                squares: flatten(squareTest),
-                xPlayed: true
-            }
-        ).then(response => {
-            console.log(response)
-        })
+    console.log("Hola desde el deploy");
+    // try {
+    //     const db = admin.database();
+    //     const idGame = idGenerator();
+    //     const squareTest = [['X', null, null, null, null], ['X', null, null, null, null], ['X', null, null, null, null]]
+    //     db.ref('games').push(
+    //         {
+    //             id: idGame,
+    //             squares: flatten(squareTest),
+    //             xPlayed: true
+    //         }
+    //     ).then(response => {
+    //         console.log(response)
+    //     })
 
 
-    } catch (e) {
-        console.log(e)
-    }
+    // } catch (e) {
+    //     console.log(e)
+    // }
 
 
 }

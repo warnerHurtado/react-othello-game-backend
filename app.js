@@ -28,4 +28,4 @@ app.get('/', (req, res) => {
 
 app.use(othelloController );
    
-module.exports = app;
+module.exports = app;   
