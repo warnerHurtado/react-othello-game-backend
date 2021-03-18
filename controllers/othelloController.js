@@ -94,9 +94,8 @@ router.post('/editGame', async (req, res) => {
 
     let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
 
-
-
     if (modifiedBoard !== null) {
+        
         try {
 
             var pool = firebase.firestore();
