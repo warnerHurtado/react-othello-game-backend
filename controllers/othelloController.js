@@ -49,7 +49,7 @@ router.get('/newGame', (req, res) => {
         boardGame: boardGenerator(),
         xPlay: true
     }).then(response => {
-        
+
         res.status(status.OK).json({ idGame: response.id });
     }).catch(err => {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
@@ -63,11 +63,11 @@ router.get('/getGame', async (req, res) => {
         var db = firebase.firestore();
         const idGame = req.query.idGame;
 
-        if ( idGame ) {
+        if (idGame) {
             const gameRef = db.collection('games').doc(idGame);
             const docGame = await gameRef.get();
 
-            console.log( 'Pafdasdasasd' )
+            console.log('Pafdasdasasd')
 
             if (docGame.data()) {
                 res.status(status.OK).json({ game: docGame.data() });
@@ -89,29 +89,29 @@ router.post('/editGame', async (req, res) => {
     const idGame = req.body.idGame;
     const boardGame = JSON.parse(req.body.boardGame);
     const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
-    const clickedPosition = parseInt( req.body.clickedPosition );
-    
-    
+    const clickedPosition = parseInt(req.body.clickedPosition);
+
+
     let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
 
-   
 
-    if ( modifiedBoard !== null ) {
+
+    if (modifiedBoard !== null) {
         try {
 
             var pool = firebase.firestore();
-            await pool.collection('games').doc( idGame ).update({
-                boardGame   : modifiedBoard,
-                xPlay       : xPlay 
-            
-            }).then( () => {
-                res.status(200).json( { success : 200 } );
-            }).catch( () => {
-                res.status(500).json( { error : err} );
+            await pool.collection('games').doc(idGame).update({
+                boardGame: modifiedBoard,
+                xPlay: xPlay
+
+            }).then(() => {
+                res.status(200).json({ success: 200 });
+            }).catch(() => {
+                res.status(500).json({ error: err });
             })
 
-        } catch ( err ) {
-            res.status( status.INTERNAL_SERVER_ERROR ).json( { error: err  } );
+        } catch (err) {
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
         }
 
     } else {
@@ -131,7 +131,7 @@ function flipSquares(board, position, xIsNext) {
     let modifiedBoard = null;
     let [startX, startY] = [position % 8, (position - position % 8) / 8];
 
-    console.log( board, position, xIsNext )
+    console.log(board, position, xIsNext)
 
     if (board[position] !== null) {
         return null;
@@ -166,7 +166,7 @@ function flipSquares(board, position, xIsNext) {
         }
     });
 
-    console.log( modifiedBoard )
+    console.log(modifiedBoard)
     return modifiedBoard;
 }
 
