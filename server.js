@@ -9,5 +9,5 @@ const hostname = process.env.HOST || 'localhost';
 const server = http.createServer(app);
 
 server.listen(port, () => {
-    console.log(`El servidor se está ejecutando en el puerto ${port}/`);
+    console.log(`El servidor se está ejecutando en el puerto http://${hostname}:${port}/`);
 });
