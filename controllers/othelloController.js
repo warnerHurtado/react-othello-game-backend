@@ -91,31 +91,32 @@ router.post('/editGame', async (req, res) => {
     const xPlay = req.body.xPlay;
     const clickedPosition = req.body.clickedPosition;
 
+    console.log( req.body )
 
-    let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
+    // let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
 
-    if (modifiedBoard !== null) {
+    // if (modifiedBoard !== null) {
 
-        try {
+    //     try {
 
-            var pool = firebase.firestore();
-            await pool.collection('games').doc(idGame).update({
-                boardGame: modifiedBoard,
-                xPlay: xPlay
+    //         var pool = firebase.firestore();
+    //         await pool.collection('games').doc(idGame).update({
+    //             boardGame: modifiedBoard,
+    //             xPlay: xPlay
 
-            }).then(() => {
-                res.status(200).json({ success: 200 });
-            }).catch(() => {
-                res.status(500).json({ error: err });
-            })
+    //         }).then(() => {
+    //             res.status(200).json({ success: 200 });
+    //         }).catch(() => {
+    //             res.status(500).json({ error: err });
+    //         })
 
-        } catch (err) {
-            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-        }
+    //     } catch (err) {
+    //         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+    //     }
 
-    } else {
-        res.status(500).json({ success: 500 })
-    }
+    // } else {
+    //     res.status(500).json({ success: 500 })
+    // }
 
 
 });
