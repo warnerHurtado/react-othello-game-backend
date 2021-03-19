@@ -87,6 +87,7 @@ router.post('/editGame', async (req, res) => {
 
 
     const idGame = req.body.idGame;
+    console.log( req.body.boardGame )
     const boardGame = JSON.parse(req.body.boardGame);
     const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
     const clickedPosition = parseInt(req.body.clickedPosition);
