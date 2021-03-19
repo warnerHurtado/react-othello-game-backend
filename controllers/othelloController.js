@@ -83,20 +83,59 @@ router.get('/getGame', async (req, res) => {
 });
 
 
-router.post('/editGame', async (req, res) => {
+// router.post('/editGame', async (req, res) => {
 
 
-    const idGame = req.body.idGame;
-    const boardGame = JSON.parse(req.body.boardGame);
-    const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
-    const clickedPosition = req.body.clickedPosition;
+//     const idGame = req.body.idGame;
+//     const boardGame = JSON.parse(req.body.boardGame);
+//     const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
+//     const clickedPosition = req.body.clickedPosition;
+
+//     let modifiedBoard = flipSquares(boardGame, 29, xPlay);
+
+//     if (modifiedBoard !== null) {
+
+//         try {
+
+//             var pool = firebase.firestore();
+//             await pool.collection('games').doc(idGame).update({
+//                 boardGame: modifiedBoard,
+//                 xPlay: xPlay
+
+//             }).then(() => {
+//                 res.status(200).json({ success: 200 });
+//             }).catch(() => {
+//                 res.status(500).json({ error: err });
+//             })
+
+//         } catch (err) {
+//             res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+//         }
+
+//     } else {
+//         res.status(500).json({ success: 500 })
+//     }
+
+
+// });
 
 
 
-    let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
 
-    if (modifiedBoard !== null) {
+router.post('/editGame', async (req, res) =>{
 
+    idGame = req.body.idGame;
+    boardGame = JSON.parse( req.body.board );
+    position =  parseInt( req.body.clicked );
+    xPlay = JSON.parse( req.body.xPlay )
+
+    console.log(boardAux, position, xPlay, idGame)
+
+    let modifiedBoard = flipSquares(boardGame, position, xPlay);
+
+    if ( modifiedBoard !== null ) {
+
+        console.log('Soy bestia')
         try {
 
             var pool = firebase.firestore();
@@ -119,27 +158,29 @@ router.post('/editGame', async (req, res) => {
     }
 
 
+
+
+
+
 });
 
 
 
 
 
-
-function flipSquares(board, position, xIsNext) {
-
+function flipSquares(squares, position, xIsNext) {
     let modifiedBoard = null;
+    
+
     let [startX, startY] = [position % 8, (position - position % 8) / 8];
 
-    console.log(board, position, xIsNext)
-
-    if (board[position] !== null) {
-        console.log('Entré en null')
+    if (squares[position] !== null) {
         return null;
     }
 
-    [1, 7, 8, 9, -1, -7, -8, -9].forEach((offset) => {
-        let flippedSquares = modifiedBoard ? modifiedBoard.slice() : board.slice();
+    
+    calculateOffsets(8).forEach((offset) => {
+        let flippedSquares = modifiedBoard ? modifiedBoard.slice() : squares.slice();
         let atLeastOneMarkIsFlipped = false;
         let [lastXpos, lastYPos] = [startX, startY];
 
@@ -147,11 +188,13 @@ function flipSquares(board, position, xIsNext) {
 
             let [xPos, yPos] = [y % 8, (y - y % 8) / 8];
 
+            // Fix when board is breaking into a new row or col
             if (Math.abs(lastXpos - xPos) > 1 || Math.abs(lastYPos - yPos) > 1) {
                 break;
             }
+
+            // Next square was occupied with the opposite color
             if (flippedSquares[y] === (!xIsNext ? 'X' : 'O')) {
-                console.log('Hola if')
                 flippedSquares[y] = xIsNext ? 'X' : 'O';
                 atLeastOneMarkIsFlipped = true;
                 [lastXpos, lastYPos] = [xPos, yPos];
@@ -160,13 +203,19 @@ function flipSquares(board, position, xIsNext) {
             // Next aquare was occupied with the same color
             else if ((flippedSquares[y] === (xIsNext ? 'X' : 'O')) && atLeastOneMarkIsFlipped) {
                 flippedSquares[position] = xIsNext ? 'X' : 'O';
-                console.log('hola else if')
                 modifiedBoard = flippedSquares.slice();
             }
             break;
         }
     });
+    
+    console.log( modifiedBoard, 'desde la función' )
     return modifiedBoard;
+}
+
+
+function calculateOffsets( index ) {
+    return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
 }
 
 
