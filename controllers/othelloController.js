@@ -124,12 +124,14 @@ router.get('/getGame', async (req, res) => {
 
 router.post('/editGame', async (req, res) =>{
 
-    idGame = req.body.idGame;
-    boardGame = JSON.parse( req.body.board );
-    position =  parseInt( req.body.clicked );
-    xPlay = JSON.parse( req.body.xPlay )
+    console.log(req.body);
 
-    console.log(boardAux, position, xPlay, idGame)
+    const idGame = req.body.params.idGame;
+    const boardGame =  req.body.params.boardGame;
+    const position =  req.body.params.clickedPosition;
+    const xPlay = req.body.params.xPlay;
+    
+    console.log(boardGame, position, xPlay, idGame)
 
     let modifiedBoard = flipSquares(boardGame, position, xPlay);
 
@@ -141,7 +143,10 @@ router.post('/editGame', async (req, res) =>{
             var pool = firebase.firestore();
             await pool.collection('games').doc(idGame).update({
                 boardGame: modifiedBoard,
-                xPlay: xPlay
+
+
+                xPlay: !xPlay
+
 
             }).then(() => {
                 res.status(200).json({ success: 200 });
