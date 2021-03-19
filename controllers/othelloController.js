@@ -87,16 +87,15 @@ router.post('/editGame', async (req, res) => {
 
 
     const idGame = req.body.idGame;
-    console.log( req.body.boardGame )
-    const boardGame = JSON.parse(req.body.boardGame);
-    const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
-    const clickedPosition = parseInt(req.body.clickedPosition);
+    const boardGame = req.body.boardGame;
+    const xPlay = req.body.xPlay;
+    const clickedPosition = req.body.clickedPosition;
 
 
     let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
 
     if (modifiedBoard !== null) {
-        
+
         try {
 
             var pool = firebase.firestore();
