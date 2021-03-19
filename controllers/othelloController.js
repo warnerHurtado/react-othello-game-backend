@@ -87,9 +87,10 @@ router.post('/editGame', async (req, res) => {
 
 
     const idGame = req.body.idGame;
-    const boardGame = req.body.boardGame;
-    const xPlay = req.body.xPlay;
+    const boardGame = JSON.parse(req.body.boardGame);
+    const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
     const clickedPosition = req.body.clickedPosition;
+
 
 
     let modifiedBoard = flipSquares(boardGame, clickedPosition, xPlay);
@@ -133,6 +134,7 @@ function flipSquares(board, position, xIsNext) {
     console.log(board, position, xIsNext)
 
     if (board[position] !== null) {
+        console.log('Entré en null')
         return null;
     }
 
@@ -149,7 +151,7 @@ function flipSquares(board, position, xIsNext) {
                 break;
             }
             if (flippedSquares[y] === (!xIsNext ? 'X' : 'O')) {
-
+                console.log('Hola if')
                 flippedSquares[y] = xIsNext ? 'X' : 'O';
                 atLeastOneMarkIsFlipped = true;
                 [lastXpos, lastYPos] = [xPos, yPos];
@@ -164,8 +166,6 @@ function flipSquares(board, position, xIsNext) {
             break;
         }
     });
-
-    console.log(modifiedBoard)
     return modifiedBoard;
 }
 
