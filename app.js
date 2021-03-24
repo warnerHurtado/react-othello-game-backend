@@ -24,8 +24,9 @@ const othelloController = require('./controllers/othelloController');
 
 // Rutas
 app.get('/', (req, res) => {
-    res.send(200)
+    res.send('Backend is up')
 })
+
 
 app.use(othelloController);
 
