@@ -98,6 +98,8 @@ router.get('/getPlayerGames', (req, res) => {
 
 router.post('/addPlayer', async (req, res) => {
 
+    console.log( req.body );
+
     const idGame    = req.body.idGame;
     const ndPlayer  = req.body.ndPlayer;
 
