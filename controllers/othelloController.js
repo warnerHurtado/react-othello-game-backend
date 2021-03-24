@@ -81,7 +81,7 @@ router.get('/getPlayerGames', (req, res) => {
                     var playerGames = []
                     
                     querySnapshot.forEach( (doc) => {
-                        playerGames.push( { idGame: doc.id, game: doc.data() } );
+                        playerGames.push( doc.id );
                     });
 
                     res.status( status.OK ).json( { games: playerGames } );
