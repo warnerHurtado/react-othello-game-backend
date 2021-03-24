@@ -31,29 +31,128 @@ function boardGenerator() {
     return flatten(boardMatrix);
 }
 
-let boardAux = boardGenerator();
-
-
-router.get('/flipped', (req, res) => {
-    console.log(boardAux)
-    flipSquares(boardAux, 30, false);
-    res.status(200).json({ hola: 'hola' })
-});
-
 
 router.get('/newGame', (req, res) => {
 
-    var db = firebase.firestore();
 
-    db.collection('games').add({
-        boardGame: boardGenerator(),
-        xPlay: true
+    const createdAt = req.query.createdAt; 
+    
+    try{
+
+        var db = firebase.firestore();
+
+        db.collection('games').add({
+            boardGame: boardGenerator(),
+            xPlay: true,
+            player1: createdAt,
+            currentPlayer: createdAt,
+            player2: null
+
     }).then(response => {
-
         res.status(status.OK).json({ idGame: response.id });
     }).catch(err => {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-    })
+    });
+    
+    }catch( err ){
+        res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
+    }
+
+
+});
+
+
+
+
+router.get('/getPlayerGames', (req, res) => {
+
+    const playerId = req.query.playerId;
+
+    try{
+
+        var pool = firebase.firestore();
+        
+        pool.collection('games').where( "player1", "==", playerId )
+            .get()
+                .then( (querySnapshot) => {
+
+                    var playerGames = []
+                    
+                    querySnapshot.forEach( (doc) => {
+                        playerGames.push( { idGame: doc.id, game: doc.data() } );
+                    });
+
+                    res.status( status.OK ).json( { games: playerGames } );
+                    
+                }).catch( err => res.status( status.INTERNAL_SERVER_ERROR ).json( { error: err } ) )
+
+    }catch( err ){
+        res.send( status.INTERNAL_SERVER_ERROR).json({ error: err }) 
+    }
+});
+
+
+
+
+router.post('/addPlayer', async (req, res) => {
+
+    const idGame    = req.body.idGame;
+    const ndPlayer  = req.body.ndPlayer;
+
+
+    try{
+        var pool = firebase.firestore();
+
+        await pool.collection('games').doc( idGame ).update({
+            player2 : ndPlayer
+        
+        }).then( () => {
+            res.status( status.OK ).json( { success: 200 } ); 
+        }).catch( () => {
+            res.status( status.INTERNAL_SERVER_ERROR ).json({ success: 500 });
+        })
+
+    }catch( err ){
+        res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
+    }
+});
+
+
+router.post('/editGame', async (req, res) =>{
+
+    const idGame = req.body.params.idGame;
+    const boardGame =  req.body.params.boardGame;
+    const position =  req.body.params.clickedPosition;
+    const xPlay = req.body.params.xPlay;
+    
+    console.log(boardGame, position, xPlay, idGame)
+
+    let modifiedBoard = flipSquares(boardGame, position, xPlay);
+
+    if ( modifiedBoard !== null ) {
+
+        try {
+
+            var pool = firebase.firestore();
+            await pool.collection('games').doc(idGame).update({
+                boardGame: modifiedBoard,
+                xPlay: !xPlay
+
+
+            }).then(() => {
+                res.status(200).json({ success: 200 });
+            }).catch(() => {
+                res.status(500).json({ error: err });
+            })
+
+        } catch (err) {
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+        }
+
+    } else {
+        res.status(500).json({ success: 500 })
+    }
+
 });
 
 
@@ -83,100 +182,10 @@ router.get('/getGame', async (req, res) => {
 });
 
 
-// router.post('/editGame', async (req, res) => {
-
-
-//     const idGame = req.body.idGame;
-//     const boardGame = JSON.parse(req.body.boardGame);
-//     const xPlay = JSON.parse(req.body.xPlay.toLowerCase());
-//     const clickedPosition = req.body.clickedPosition;
-
-//     let modifiedBoard = flipSquares(boardGame, 29, xPlay);
-
-//     if (modifiedBoard !== null) {
-
-//         try {
-
-//             var pool = firebase.firestore();
-//             await pool.collection('games').doc(idGame).update({
-//                 boardGame: modifiedBoard,
-//                 xPlay: xPlay
-
-//             }).then(() => {
-//                 res.status(200).json({ success: 200 });
-//             }).catch(() => {
-//                 res.status(500).json({ error: err });
-//             })
-
-//         } catch (err) {
-//             res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-//         }
-
-//     } else {
-//         res.status(500).json({ success: 500 })
-//     }
-
-
-// });
-
-
-
-
-router.post('/editGame', async (req, res) =>{
-
-    console.log(req.body);
-
-    const idGame = req.body.params.idGame;
-    const boardGame =  req.body.params.boardGame;
-    const position =  req.body.params.clickedPosition;
-    const xPlay = req.body.params.xPlay;
-    
-    console.log(boardGame, position, xPlay, idGame)
-
-    let modifiedBoard = flipSquares(boardGame, position, xPlay);
-
-    if ( modifiedBoard !== null ) {
-
-        console.log('Soy bestia')
-        try {
-
-            var pool = firebase.firestore();
-            await pool.collection('games').doc(idGame).update({
-                boardGame: modifiedBoard,
-
-
-                xPlay: !xPlay
-
-
-            }).then(() => {
-                res.status(200).json({ success: 200 });
-            }).catch(() => {
-                res.status(500).json({ error: err });
-            })
-
-        } catch (err) {
-            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-        }
-
-    } else {
-        res.status(500).json({ success: 500 })
-    }
-
-
-
-
-
-
-});
-
-
-
-
 
 function flipSquares(squares, position, xIsNext) {
     let modifiedBoard = null;
     
-
     let [startX, startY] = [position % 8, (position - position % 8) / 8];
 
     if (squares[position] !== null) {
@@ -193,19 +202,18 @@ function flipSquares(squares, position, xIsNext) {
 
             let [xPos, yPos] = [y % 8, (y - y % 8) / 8];
 
-            // Fix when board is breaking into a new row or col
             if (Math.abs(lastXpos - xPos) > 1 || Math.abs(lastYPos - yPos) > 1) {
                 break;
             }
 
-            // Next square was occupied with the opposite color
             if (flippedSquares[y] === (!xIsNext ? 'X' : 'O')) {
                 flippedSquares[y] = xIsNext ? 'X' : 'O';
                 atLeastOneMarkIsFlipped = true;
                 [lastXpos, lastYPos] = [xPos, yPos];
                 continue;
             }
-            // Next aquare was occupied with the same color
+
+
             else if ((flippedSquares[y] === (xIsNext ? 'X' : 'O')) && atLeastOneMarkIsFlipped) {
                 flippedSquares[position] = xIsNext ? 'X' : 'O';
                 modifiedBoard = flippedSquares.slice();
@@ -213,8 +221,7 @@ function flipSquares(squares, position, xIsNext) {
             break;
         }
     });
-    
-    console.log( modifiedBoard, 'desde la función' )
+
     return modifiedBoard;
 }
 
@@ -222,8 +229,6 @@ function flipSquares(squares, position, xIsNext) {
 function calculateOffsets( index ) {
     return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
 }
-
-
 
 
 
