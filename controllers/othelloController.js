@@ -105,8 +105,9 @@ router.post('/addPlayer', async (req, res) => {
 
 
     try{
-        var pool = firebase.firestore();
 
+        var pool = firebase.firestore();
+        
         await pool.collection('games').doc( idGame ).update({
             player2 : ndPlayer
         
@@ -117,6 +118,7 @@ router.post('/addPlayer', async (req, res) => {
         })
 
     }catch( err ){
+        console.log('Error: ', err);
         res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
     }
 });
