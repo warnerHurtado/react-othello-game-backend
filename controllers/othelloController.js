@@ -98,7 +98,7 @@ router.get('/getPlayerGames', (req, res) => {
 
 router.post('/addPlayer', async (req, res) => {
 
-    console.log( req.body );
+
 
     const idGame    = req.body.params.idGame;
     const ndPlayer  = req.body.params.ndPlayer;
@@ -118,7 +118,7 @@ router.post('/addPlayer', async (req, res) => {
         })
 
     }catch( err ){
-        console.log('Error: ', err);
+        
         res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
     }
 });
@@ -131,8 +131,6 @@ router.post('/editGame', async (req, res) =>{
     const position =  req.body.params.clickedPosition;
     const xPlay = req.body.params.xPlay;
     
-    console.log(boardGame, position, xPlay, idGame)
-
     let modifiedBoard = flipSquares(boardGame, position, xPlay);
 
     if ( modifiedBoard !== null ) {
@@ -171,8 +169,6 @@ router.get('/getGame', async (req, res) => {
         if (idGame) {
             const gameRef = db.collection('games').doc(idGame);
             const docGame = await gameRef.get();
-
-            console.log('Pafdasdasasd')
 
             if (docGame.data()) {
                 res.status(status.OK).json({ game: docGame.data() });
