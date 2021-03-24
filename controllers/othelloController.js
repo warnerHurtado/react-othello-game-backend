@@ -35,7 +35,7 @@ function boardGenerator() {
 router.get('/newGame', (req, res) => {
 
 
-    const createdAt = req.query.createdAt; 
+    const createdBy = req.query.createdBy; 
     
     try{
 
@@ -44,9 +44,11 @@ router.get('/newGame', (req, res) => {
         db.collection('games').add({
             boardGame: boardGenerator(),
             xPlay: true,
-            player1: createdAt,
-            currentPlayer: createdAt,
-            player2: null
+            player1: createdBy,
+            currentPlayer: createdBy,
+            player2: null,
+            createdAt: Date.now()
+            
 
     }).then(response => {
         res.status(status.OK).json({ idGame: response.id });
