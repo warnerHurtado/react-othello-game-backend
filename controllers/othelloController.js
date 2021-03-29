@@ -142,15 +142,18 @@ router.post('/skipTurn', async (req, res) => {
         }).then(() => {
             res.status(status.OK).json({ success: 200 })
 
-        }).catch(err){
-            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-        }
+        }).catch((err) => {
 
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+        })
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
-})
+});
+
+
+
 
 router.post('/editGame', async (req, res) => {
 
