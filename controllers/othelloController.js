@@ -47,7 +47,8 @@ router.get('/newGame', (req, res) => {
             player1: createdBy,
             currentPlayer: createdBy,
             player2: null,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            score: { player1: 2, player2: 2 }
             
 
     }).then(response => {
@@ -124,9 +125,11 @@ router.post('/addPlayer', async (req, res) => {
 });
 
 
+
+
 router.post('/editGame', async (req, res) =>{
 
-    console.log( req.body );
+   
 
     const idGame = req.body.params.idGame;
     const boardGame =  req.body.params.boardGame;
@@ -138,13 +141,18 @@ router.post('/editGame', async (req, res) =>{
 
     if ( modifiedBoard !== null ) {
 
+        
+        calculatedScore = calculateScore( modifiedBoard );
+        console.log(calculatedScore)
         try {
 
             var pool = firebase.firestore();
+           
             await pool.collection('games').doc(idGame).update({
                 boardGame: modifiedBoard,
                 xPlay: !xPlay,
-                currentPlayer: currentPlayer
+                currentPlayer: currentPlayer,
+                score: calculatedScore
             }).then(() => {
                 res.status(200).json({ success: 200 });
             }).catch(() => {
@@ -233,6 +241,30 @@ function flipSquares(squares, position, xIsNext) {
 function calculateOffsets( index ) {
     return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
 }
+
+
+function calculateScore( board ){
+    
+    var player1Points = 0;
+    var player2Points = 0;
+
+    board.forEach( item => {
+        if( item ){
+            item == 'X' ? player1Points ++ : player2Points ++
+            console.log( item )
+        }
+    });
+
+    gameScore = {
+        player1 : player1Points,
+        player2:  player2Points
+    };
+
+    return gameScore;
+}
+
+
+
 
 
 
