@@ -35,9 +35,9 @@ function boardGenerator() {
 router.get('/newGame', (req, res) => {
 
 
-    const createdBy = req.query.createdBy; 
-    
-    try{
+    const createdBy = req.query.createdBy;
+
+    try {
 
         var db = firebase.firestore();
 
@@ -49,16 +49,16 @@ router.get('/newGame', (req, res) => {
             player2: null,
             createdAt: Date.now(),
             score: { player1: 2, player2: 2 }
-            
 
-    }).then(response => {
-        res.status(status.OK).json({ idGame: response.id });
-    }).catch(err => {
+
+        }).then(response => {
+            res.status(status.OK).json({ idGame: response.id });
+        }).catch(err => {
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+        });
+
+    } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
-    });
-    
-    }catch( err ){
-        res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
     }
 
 
@@ -71,26 +71,26 @@ router.get('/getPlayerGames', (req, res) => {
 
     const playerId = req.query.playerId;
 
-    try{
+    try {
 
         var pool = firebase.firestore();
-        
-        pool.collection('games').where( "player1", "==", playerId )
+
+        pool.collection('games').where("player1", "==", playerId)
             .get()
-                .then( (querySnapshot) => {
+            .then((querySnapshot) => {
 
-                    var playerGames = []
-                    
-                    querySnapshot.forEach( (doc) => {
-                        playerGames.push( doc.id );
-                    });
+                var playerGames = []
 
-                    res.status( status.OK ).json( { games: playerGames } );
-                    
-                }).catch( err => res.status( status.INTERNAL_SERVER_ERROR ).json( { error: err } ) )
+                querySnapshot.forEach((doc) => {
+                    playerGames.push(doc.id);
+                });
 
-    }catch( err ){
-        res.send( status.INTERNAL_SERVER_ERROR).json({ error: err }) 
+                res.status(status.OK).json({ games: playerGames });
+
+            }).catch(err => res.status(status.INTERNAL_SERVER_ERROR).json({ error: err }))
+
+    } catch (err) {
+        res.send(status.INTERNAL_SERVER_ERROR).json({ error: err })
     }
 });
 
@@ -101,53 +101,78 @@ router.post('/addPlayer', async (req, res) => {
 
 
 
-    const idGame    = req.body.params.idGame;
-    const ndPlayer  = req.body.params.ndPlayer;
+    const idGame = req.body.params.idGame;
+    const ndPlayer = req.body.params.ndPlayer;
 
 
-    try{
+    try {
 
         var pool = firebase.firestore();
-        
-        await pool.collection('games').doc( idGame ).update({
-            player2 : ndPlayer
-        
-        }).then( () => {
-            res.status( status.OK ).json( { success: 200 } ); 
-        }).catch( () => {
-            res.status( status.INTERNAL_SERVER_ERROR ).json({ success: 500 });
+
+        await pool.collection('games').doc(idGame).update({
+            player2: ndPlayer
+
+        }).then(() => {
+            res.status(status.OK).json({ success: 200 });
+        }).catch(() => {
+            res.status(status.INTERNAL_SERVER_ERROR).json({ success: 500 });
         })
 
-    }catch( err ){
-        
-        res.status( status.INTERNAL_SERVER_ERROR ).json({ error: err });
+    } catch (err) {
+
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 });
 
 
 
-
-router.post('/editGame', async (req, res) =>{
-
-   
+router.post('/skipTurn', async (req, res) => {
 
     const idGame = req.body.params.idGame;
-    const boardGame =  req.body.params.boardGame;
-    const position =  req.body.params.clickedPosition;
     const xPlay = req.body.params.xPlay;
     const currentPlayer = req.body.params.currentPlayer;
-    
+
+    try {
+
+        var pool = firebase.firestore();
+        await pool.collection('games').doc(idGame).update({
+            xPlay: xPlay,
+            currentPlayer: currentPlayer
+
+        }).then(() => {
+            res.status(status.OK).json({ success: 200 })
+
+        }).catch(err){
+            res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+        }
+
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+    }
+})
+
+router.post('/editGame', async (req, res) => {
+
+
+
+    const idGame = req.body.params.idGame;
+    const boardGame = req.body.params.boardGame;
+    const position = req.body.params.clickedPosition;
+    const xPlay = req.body.params.xPlay;
+    const currentPlayer = req.body.params.currentPlayer;
+
     let modifiedBoard = flipSquares(boardGame, position, xPlay);
 
-    if ( modifiedBoard !== null ) {
+    if (modifiedBoard !== null) {
 
-        
-        calculatedScore = calculateScore( modifiedBoard );
+
+        calculatedScore = calculateScore(modifiedBoard);
         console.log(calculatedScore)
         try {
 
             var pool = firebase.firestore();
-           
+
             await pool.collection('games').doc(idGame).update({
                 boardGame: modifiedBoard,
                 xPlay: !xPlay,
@@ -197,14 +222,14 @@ router.get('/getGame', async (req, res) => {
 
 function flipSquares(squares, position, xIsNext) {
     let modifiedBoard = null;
-    
+
     let [startX, startY] = [position % 8, (position - position % 8) / 8];
 
     if (squares[position] !== null) {
         return null;
     }
 
-    
+
     calculateOffsets(8).forEach((offset) => {
         let flippedSquares = modifiedBoard ? modifiedBoard.slice() : squares.slice();
         let atLeastOneMarkIsFlipped = false;
@@ -238,26 +263,28 @@ function flipSquares(squares, position, xIsNext) {
 }
 
 
-function calculateOffsets( index ) {
+
+
+function calculateOffsets(index) {
     return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
 }
 
 
-function calculateScore( board ){
-    
+function calculateScore(board) {
+
     var player1Points = 0;
     var player2Points = 0;
 
-    board.forEach( item => {
-        if( item ){
-            item == 'X' ? player1Points ++ : player2Points ++
-            console.log( item )
+    board.forEach(item => {
+        if (item) {
+            item == 'X' ? player1Points++ : player2Points++
+            console.log(item)
         }
     });
 
     gameScore = {
-        player1 : player1Points,
-        player2:  player2Points
+        player1: player1Points,
+        player2: player2Points
     };
 
     return gameScore;
