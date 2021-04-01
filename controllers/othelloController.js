@@ -32,6 +32,77 @@ function boardGenerator() {
 }
 
 
+
+function flipSquares(squares, position, xIsNext) {
+
+    let modifiedBoard = null;
+    let [startX, startY] = [position % 8, (position - position % 8) / 8];
+
+    if (squares[position] !== null) {
+        return null;
+    }
+
+
+    calculateOffsets(8).forEach((offset) => {
+        let flippedSquares = modifiedBoard ? modifiedBoard.slice() : squares.slice();
+        let atLeastOneMarkIsFlipped = false;
+        let [lastXpos, lastYPos] = [startX, startY];
+
+        for (let y = position + offset; y < 64; y = y + offset) {
+
+            let [xPos, yPos] = [y % 8, (y - y % 8) / 8];
+
+            if (Math.abs(lastXpos - xPos) > 1 || Math.abs(lastYPos - yPos) > 1) {
+                break;
+            }
+
+            if (flippedSquares[y] === (!xIsNext ? 'X' : 'O')) {
+                flippedSquares[y] = xIsNext ? 'X' : 'O';
+                atLeastOneMarkIsFlipped = true;
+                [lastXpos, lastYPos] = [xPos, yPos];
+                continue;
+            }
+
+
+            else if ((flippedSquares[y] === (xIsNext ? 'X' : 'O')) && atLeastOneMarkIsFlipped) {
+                flippedSquares[position] = xIsNext ? 'X' : 'O';
+                modifiedBoard = flippedSquares.slice();
+            }
+            break;
+        }
+    });
+
+    return modifiedBoard;
+}
+
+
+
+
+function calculateOffsets(index) {
+    return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
+}
+
+
+function calculateScore(board) {
+
+    var player1Points = 0;
+    var player2Points = 0;
+
+    board.forEach(item => {
+        if (item) {
+            item == 'X' ? player1Points++ : player2Points++
+            console.log(item)
+        }
+    });
+
+    gameScore = {
+        player1: player1Points,
+        player2: player2Points
+    };
+
+    return gameScore;
+}
+
 router.get('/newGame', (req, res) => {
 
 
@@ -40,7 +111,6 @@ router.get('/newGame', (req, res) => {
     try {
 
         var db = firebase.firestore();
-
         db.collection('games').add({
             boardGame: boardGenerator(),
             xPlay: true,
@@ -65,29 +135,64 @@ router.get('/newGame', (req, res) => {
 });
 
 
+router.post('/savePlayerInformation', async (req, res) => {
 
+    const uid = req.body.params.uid;
+    const displayName = req.body.params.displayName;
+    const email = req.body.params.email;
 
-router.get('/getPlayerGames', (req, res) => {
+    console.log( req.body )
+
+    try{
+
+        var pool = firebase.firestore();
+        pool.collection('registeredUsers').add({
+            uid: uid,
+            displayName: displayName,
+            email: email
+        
+        }).then(( response ) => {
+            res.status(status.OK).json( { response: response } );
+        }).catch( (err) => {
+            res.status( status.INTERNAL_SERVER_ERROR ).json( {err: err} );
+        })
+        
+    }catch( err ){
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+    }
+});
+
+router.get('/getPlayerGames', async (req, res) => {
 
     const playerId = req.query.playerId;
 
     try {
-
+        
         var pool = firebase.firestore();
+        const gamesRef = pool.collection('games');
+        
+        const player1Snapshot = await gamesRef.where( 'player1', "==", playerId ).get()
+        const player2Snapshot = await gamesRef.where( 'player2', "==", playerId ).get()
+        
+        const [ player1Games, player2Games ] = await Promise.all([
+            player1Snapshot,
+            player2Snapshot
+        ]);
+        
+        const player1Array = player1Games.docs;
+        const player2Array = player2Games.docs;
+        
+        const gamesArray = player1Array.concat( player2Array );
+        
+        var allGames = [];
+        gamesArray.forEach( (doc) => {
+            
+            if ( !allGames.includes( doc.id ) ){
+                allGames.push( doc.id )
+            }
+        });
 
-        pool.collection('games').where("player1", "==", playerId)
-            .get()
-            .then((querySnapshot) => {
-
-                var playerGames = []
-
-                querySnapshot.forEach((doc) => {
-                    playerGames.push(doc.id);
-                });
-
-                res.status(status.OK).json({ games: playerGames });
-
-            }).catch(err => res.status(status.INTERNAL_SERVER_ERROR).json({ error: err }))
+        res.status(status.OK).json({ games: allGames });
 
     } catch (err) {
         res.send(status.INTERNAL_SERVER_ERROR).json({ error: err })
@@ -98,12 +203,8 @@ router.get('/getPlayerGames', (req, res) => {
 
 
 router.post('/addPlayer', async (req, res) => {
-
-
-
     const idGame = req.body.params.idGame;
     const ndPlayer = req.body.params.ndPlayer;
-
 
     try {
 
@@ -220,82 +321,6 @@ router.get('/getGame', async (req, res) => {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 });
-
-
-
-function flipSquares(squares, position, xIsNext) {
-    let modifiedBoard = null;
-
-    let [startX, startY] = [position % 8, (position - position % 8) / 8];
-
-    if (squares[position] !== null) {
-        return null;
-    }
-
-
-    calculateOffsets(8).forEach((offset) => {
-        let flippedSquares = modifiedBoard ? modifiedBoard.slice() : squares.slice();
-        let atLeastOneMarkIsFlipped = false;
-        let [lastXpos, lastYPos] = [startX, startY];
-
-        for (let y = position + offset; y < 64; y = y + offset) {
-
-            let [xPos, yPos] = [y % 8, (y - y % 8) / 8];
-
-            if (Math.abs(lastXpos - xPos) > 1 || Math.abs(lastYPos - yPos) > 1) {
-                break;
-            }
-
-            if (flippedSquares[y] === (!xIsNext ? 'X' : 'O')) {
-                flippedSquares[y] = xIsNext ? 'X' : 'O';
-                atLeastOneMarkIsFlipped = true;
-                [lastXpos, lastYPos] = [xPos, yPos];
-                continue;
-            }
-
-
-            else if ((flippedSquares[y] === (xIsNext ? 'X' : 'O')) && atLeastOneMarkIsFlipped) {
-                flippedSquares[position] = xIsNext ? 'X' : 'O';
-                modifiedBoard = flippedSquares.slice();
-            }
-            break;
-        }
-    });
-
-    return modifiedBoard;
-}
-
-
-
-
-function calculateOffsets(index) {
-    return [1, -1].concat(index - 1).concat(index).concat(index + 1).concat(-index - 1).concat(-index).concat(-index + 1)
-}
-
-
-function calculateScore(board) {
-
-    var player1Points = 0;
-    var player2Points = 0;
-
-    board.forEach(item => {
-        if (item) {
-            item == 'X' ? player1Points++ : player2Points++
-            console.log(item)
-        }
-    });
-
-    gameScore = {
-        player1: player1Points,
-        player2: player2Points
-    };
-
-    return gameScore;
-}
-
-
-
-
 
 
 module.exports = router;
