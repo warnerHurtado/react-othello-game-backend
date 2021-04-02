@@ -87,6 +87,7 @@ function calculateScore(board) {
 
     var player1Points = 0;
     var player2Points = 0;
+    var total         = 0;
 
     board.forEach(item => {
         if (item) {
@@ -100,7 +101,10 @@ function calculateScore(board) {
         player2: player2Points
     };
 
-    return gameScore;
+    total = player1Points + player2Points;
+
+    
+    return {gameScore, total};
 }
 
 async function getPlayerInfo(uid) {
@@ -113,12 +117,11 @@ async function getPlayerInfo(uid) {
             get().then(snapshot => {
                 snapshot.forEach(async doc => {
                     user = await doc.data()
+                    console.log(user);
                 })
             });
 
         return user;
-
-
     } catch (err) {
         return undefined;
     }
@@ -143,14 +146,13 @@ router.get('/newGame', async (req, res) => {
             createdAt: Date.now(),
             player1: {
                 playerId: uid,
-                playerName: displayName,
-                score: 2
+                playerName: displayName
             },
             player2: {
                 playerId: null,
-                playerName: null,
-                score: 2
+                playerName: null
             },
+            score:{player1: 2, player2: 2},
             endedGame: false
 
         }).then(response => {
@@ -223,15 +225,13 @@ router.get('/getPlayerGames', async (req, res) => {
 
 router.post('/addPlayer', async (req, res) => {
 
-    console.log(req.body)
+    const idGame = req.body.params.idGame;
 
-    const idGame = req.body.idGame;
-
+    console.log(req.body.params.ndPlayer, 'Prueba');
     try {
+        const { uid, displayName } = await getPlayerInfo(req.body.params.ndPlayer);
 
-        const { uid, displayName } = await getPlayerInfo(req.body.ndPlayer);
         var pool = firebase.firestore();
-
         await pool.collection('games').doc(idGame).update({
 
             player2: {
@@ -285,8 +285,6 @@ router.post('/skipTurn', async (req, res) => {
 
 router.post('/editGame', async (req, res) => {
 
-
-
     const idGame = req.body.params.idGame;
     const boardGame = req.body.params.boardGame;
     const position = req.body.params.clickedPosition;
@@ -297,9 +295,13 @@ router.post('/editGame', async (req, res) => {
 
     if (modifiedBoard !== null) {
 
-
+        var endedGame = false;
         calculatedScore = calculateScore(modifiedBoard);
-        console.log(calculatedScore)
+        console.log(calculatedScore.gameScore.player2,'asdfasdfa')
+        if(calculatedScore.total === 64) endedGame = true;
+
+        if(calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0) endedGame = true;
+       // ((calculatedScore.total === 64) || (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0))? endedGame=true : endedGame = false;
         try {
 
             var pool = firebase.firestore();
@@ -308,7 +310,8 @@ router.post('/editGame', async (req, res) => {
                 boardGame: modifiedBoard,
                 xPlay: !xPlay,
                 currentPlayer: currentPlayer,
-                score: calculatedScore
+                score: calculatedScore.gameScore,
+                endedGame: endedGame
             }).then(() => {
                 res.status(200).json({ success: 200 });
             }).catch(() => {
