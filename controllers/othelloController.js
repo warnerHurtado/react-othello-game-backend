@@ -117,7 +117,7 @@ async function getPlayerInfo(uid) {
             get().then(snapshot => {
                 snapshot.forEach(async doc => {
                     user = await doc.data()
-                    console.log(user);
+
                 })
             });
 
