@@ -87,7 +87,7 @@ function calculateScore(board) {
 
     var player1Points = 0;
     var player2Points = 0;
-    var total         = 0;
+    var total = 0;
 
     board.forEach(item => {
         if (item) {
@@ -103,8 +103,8 @@ function calculateScore(board) {
 
     total = player1Points + player2Points;
 
-    
-    return {gameScore, total};
+
+    return { gameScore, total };
 }
 
 async function getPlayerInfo(uid) {
@@ -152,7 +152,7 @@ router.get('/newGame', async (req, res) => {
                 playerId: null,
                 playerName: null
             },
-            score:{player1: 2, player2: 2},
+            score: { player1: 2, player2: 2 },
             endedGame: false
 
         }).then(response => {
@@ -198,18 +198,18 @@ router.post('/savePlayerInformation', async (req, res) => {
 
 router.get('/getPlayerGames', async (req, res) => {
 
-    const playerId  = req.query.playerId;
-    
+    const playerId = req.query.playerId;
+
     try {
-        
+
         var pool = firebase.firestore();
         const response = await pool.collection('games').get();
-        
-        var playerGames =  [];
+
+        var playerGames = [];
         response.forEach(doc => {
 
             if (doc.data().player1.playerId === playerId || doc.data().player2.playerId === playerId) {
-                playerGames.push( doc.id );
+                playerGames.push(doc.id);
             }
         });
 
@@ -297,11 +297,11 @@ router.post('/editGame', async (req, res) => {
 
         var endedGame = false;
         calculatedScore = calculateScore(modifiedBoard);
-        console.log(calculatedScore.gameScore.player2,'asdfasdfa')
-        if(calculatedScore.total === 64) endedGame = true;
+        console.log(calculatedScore.gameScore.player2, 'asdfasdfa')
+        if (calculatedScore.total === 64) endedGame = true;
 
-        if(calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0) endedGame = true;
-       // ((calculatedScore.total === 64) || (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0))? endedGame=true : endedGame = false;
+        if (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0) endedGame = true;
+        // ((calculatedScore.total === 64) || (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0))? endedGame=true : endedGame = false;
         try {
 
             var pool = firebase.firestore();
@@ -351,6 +351,30 @@ router.get('/getGame', async (req, res) => {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 });
+
+router.get('/getAllplayers', async (req, res) => {
+
+    try {
+
+        var pool = firebase.firestore();
+        const usersRef = await pool.collection('registeredUsers');
+
+
+        var users = []
+
+        await usersRef.get().then((snapshot) => {
+
+            snapshot.forEach( ( doc ) => {
+                users.push( doc.data() );
+            })
+        });
+
+        res.status(status.OK).json({ users: users });
+
+    } catch {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: 'Fail getting the players' });
+    }
+})
 
 
 module.exports = router;
