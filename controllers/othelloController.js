@@ -104,19 +104,19 @@ function calculateScore(board) {
 
 }
 
-async function saveInformation( uid, email, displayName ){
+async function saveInformation(uid, email, displayName) {
 
-    try{
+    try {
 
         var pool = firebase.firestore();
         await pool.collection('registeredUsers').add({
             uid: uid,
             email: email,
             displayName: displayName
-        }).then( () => console.log('se hizo'))
-        .catch(() => console.log('nel'))
+        }).then(() => console.log('se hizo'))
+            .catch(() => console.log('nel'))
 
-    }catch{
+    } catch {
         return false;
     }
 }
@@ -182,11 +182,9 @@ router.get('/newGame', async (req, res) => {
 
 router.post('/savePlayerInformation', async (req, res) => {
 
-    const uid = req.body.uid;
-    const displayName = req.body.displayName;
-    const email = req.body.email;
-
-
+    const uid = req.body.params.uid;
+    const displayName = req.body.params.displayName;
+    const email = req.body.params.email;
 
     try {
 
@@ -194,25 +192,27 @@ router.post('/savePlayerInformation', async (req, res) => {
         var alreadyExist = true;
 
         await pool.collection('registeredUsers')
-        .get()
-        .then( snapshot => {
-            snapshot.forEach( async doc => {
-                if( doc.data().uid === uid ){
-                    alreadyExist = false;
-                }
+            .get()
+            .then(snapshot => {
+                snapshot.forEach(async doc => {
+                    if (doc.data().uid === uid) {
+                        alreadyExist = false;
+                    }
+                });
             });
-        });
 
-        if ( alreadyExist ){
-           saveInformation( uid, email, displayName );
+        if (alreadyExist) {
+            saveInformation(uid, email, displayName);
         }
-        
-        res.status( status.OK ).json( { success: 200 } )
+
+        res.status(status.OK).json({ success: 200 })
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 });
+
+
 
 router.get('/getPlayerGames', async (req, res) => {
 
