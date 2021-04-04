@@ -195,14 +195,14 @@ router.post('/savePlayerInformation', async (req, res) => {
             .get()
             .then(snapshot => {
                 snapshot.forEach(async doc => {
-                    if (doc.data().uid === uid) {
+                    if ( await doc.data().uid === uid) {
                         alreadyExist = false;
                     }
                 });
             });
 
         if (alreadyExist) {
-            saveInformation(uid, email, displayName);
+            await saveInformation(uid, email, displayName);
         }
 
         res.status(status.OK).json({ success: 200 })
