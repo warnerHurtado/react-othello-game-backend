@@ -19,6 +19,7 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Methods", "DELETE, GET, POST, PUT");
     next();
 });
+
 //Importación de rutas
 const othelloController = require('./controllers/othelloController');
 

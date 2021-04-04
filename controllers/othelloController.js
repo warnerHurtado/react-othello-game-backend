@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const firebase = require('firebase-admin')
 const status = require('http-status');
+
+const firebase = require('firebase-admin')
 const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-2318d0fd23.json');
 
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
     databaseURL: 'https://othello-game-2c179-default-rtdb.firebaseio.com/'
 });
-
 
 
 function flatten(board) {
@@ -100,8 +100,25 @@ function calculateScore(board) {
 
     total = player1Points + player2Points;
 
-
     return { gameScore, total };
+
+}
+
+async function saveInformation( uid, email, displayName ){
+
+    try{
+
+        var pool = firebase.firestore();
+        await pool.collection('registeredUsers').add({
+            uid: uid,
+            email: email,
+            displayName: displayName
+        }).then( () => console.log('se hizo'))
+        .catch(() => console.log('nel'))
+
+    }catch{
+        return false;
+    }
 }
 
 async function getPlayerInfo(uid) {
@@ -124,8 +141,9 @@ async function getPlayerInfo(uid) {
     }
 }
 
-router.get('/newGame', async (req, res) => {
 
+
+router.get('/newGame', async (req, res) => {
     try {
 
         const { uid, displayName } = await getPlayerInfo(req.query.createdBy)
@@ -164,25 +182,32 @@ router.get('/newGame', async (req, res) => {
 
 router.post('/savePlayerInformation', async (req, res) => {
 
-    const uid = req.body.params.uid;
-    const displayName = req.body.params.displayName;
-    const email = req.body.params.email;
+    const uid = req.body.uid;
+    const displayName = req.body.displayName;
+    const email = req.body.email;
 
-    console.log(req.body)
+
 
     try {
 
         var pool = firebase.firestore();
-        pool.collection('registeredUsers').add({
-            uid: uid,
-            displayName: displayName,
-            email: email
+        var alreadyExist = true;
 
-        }).then((response) => {
-            res.status(status.OK).json({ response: response });
-        }).catch((err) => {
-            res.status(status.INTERNAL_SERVER_ERROR).json({ err: err });
-        })
+        await pool.collection('registeredUsers')
+        .get()
+        .then( snapshot => {
+            snapshot.forEach( async doc => {
+                if( doc.data().uid === uid ){
+                    alreadyExist = false;
+                }
+            });
+        });
+
+        if ( alreadyExist ){
+           saveInformation( uid, email, displayName );
+        }
+        
+        res.status( status.OK ).json( { success: 200 } )
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
@@ -227,8 +252,7 @@ router.post('/addPlayer', async (req, res) => {
 
             player2: {
                 playerId: uid,
-                playerName: displayName,
-                score: 2
+                playerName: displayName
             }
 
         }).then(() => {
@@ -285,10 +309,10 @@ router.post('/editGame', async (req, res) => {
         var endedGame = false;
 
         calculatedScore = calculateScore(modifiedBoard);
-        
+
         if (calculatedScore.total === 64) endedGame = true;
         if (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0) endedGame = true;
-    
+
         try {
 
             var pool = firebase.firestore();
@@ -341,15 +365,15 @@ router.get('/getGame', async (req, res) => {
 router.get('/getAllplayers', async (req, res) => {
 
     try {
-        
+
         var pool = firebase.firestore();
         const usersRef = await pool.collection('registeredUsers');
-        
+
         var users = []
         await usersRef.get().then((snapshot) => {
 
-            snapshot.forEach( ( doc ) => {
-               users.push( doc.data() );
+            snapshot.forEach((doc) => {
+                users.push(doc.data());
             })
         });
 
