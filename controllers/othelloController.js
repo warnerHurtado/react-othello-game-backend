@@ -340,8 +340,6 @@ router.get('/getGame', async (req, res) => {
 
 router.get('/getAllplayers', async (req, res) => {
 
-    const requestedUser = req.query.idUser;
-
     try {
         
         var pool = firebase.firestore();
@@ -351,7 +349,7 @@ router.get('/getAllplayers', async (req, res) => {
         await usersRef.get().then((snapshot) => {
 
             snapshot.forEach( ( doc ) => {
-                doc.data().uid !== requestedUser && users.push( doc.data() );
+               users.push( doc.data() );
             })
         });
 
