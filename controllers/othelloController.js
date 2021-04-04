@@ -4,9 +4,6 @@ const firebase = require('firebase-admin')
 const status = require('http-status');
 const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-2318d0fd23.json');
 
-
-
-
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
     databaseURL: 'https://othello-game-2c179-default-rtdb.firebaseio.com/'
@@ -127,10 +124,6 @@ async function getPlayerInfo(uid) {
     }
 }
 
-
-
-
-
 router.get('/newGame', async (req, res) => {
 
     try {
@@ -221,8 +214,6 @@ router.get('/getPlayerGames', async (req, res) => {
 });
 
 
-
-
 router.post('/addPlayer', async (req, res) => {
 
     const idGame = req.body.params.idGame;
@@ -253,7 +244,6 @@ router.post('/addPlayer', async (req, res) => {
 });
 
 
-
 router.post('/skipTurn', async (req, res) => {
 
     const idGame = req.body.params.idGame;
@@ -280,9 +270,6 @@ router.post('/skipTurn', async (req, res) => {
     }
 });
 
-
-
-
 router.post('/editGame', async (req, res) => {
 
     const idGame = req.body.params.idGame;
@@ -296,12 +283,12 @@ router.post('/editGame', async (req, res) => {
     if (modifiedBoard !== null) {
 
         var endedGame = false;
-        calculatedScore = calculateScore(modifiedBoard);
-        console.log(calculatedScore.gameScore.player2, 'asdfasdfa')
-        if (calculatedScore.total === 64) endedGame = true;
 
+        calculatedScore = calculateScore(modifiedBoard);
+        
+        if (calculatedScore.total === 64) endedGame = true;
         if (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0) endedGame = true;
-        // ((calculatedScore.total === 64) || (calculatedScore.gameScore.player2 === 0 || calculatedScore.gameScore.player1 === 0))? endedGame=true : endedGame = false;
+    
         try {
 
             var pool = firebase.firestore();
@@ -328,7 +315,6 @@ router.post('/editGame', async (req, res) => {
 
 });
 
-
 router.get('/getGame', async (req, res) => {
 
     try {
@@ -354,18 +340,18 @@ router.get('/getGame', async (req, res) => {
 
 router.get('/getAllplayers', async (req, res) => {
 
-    try {
+    const requestedUser = req.query.idUser;
 
+    try {
+        
         var pool = firebase.firestore();
         const usersRef = await pool.collection('registeredUsers');
-
-
+        
         var users = []
-
         await usersRef.get().then((snapshot) => {
 
             snapshot.forEach( ( doc ) => {
-                users.push( doc.data() );
+                doc.data().uid !== requestedUser && users.push( doc.data() );
             })
         });
 
@@ -375,6 +361,9 @@ router.get('/getAllplayers', async (req, res) => {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: 'Fail getting the players' });
     }
 })
+
+
+
 
 
 module.exports = router;
