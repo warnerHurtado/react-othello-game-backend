@@ -209,9 +209,46 @@ router.post('/createRoom', async (req, res) => {
     }
 });
 
-router.post('/editRoom', async (req, res) => {
+router.post('/addGameRoom', async (req, res) => {
 
+    const idRoom = req.body.idRoom;
+
+    try {
+
+        var pool = firebase.firestore();
+
+        await pool.collection('rooms').doc(idRoom).update({
+            games: firebase.firestore.FieldValue.arrayUnion( idRoom )
+        }).then(() => {
+            res.status(200).json({ success: 200 });
+        }).catch(() => {
+            res.status(500).json({ error: err });
+        })
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+    }
 })
+
+router.post('/addFriendRoom', async(req, res) => {
+    const idUser = req.body.idUser;
+    try {
+
+        var pool = firebase.firestore();
+
+        await pool.collection('rooms').doc(idUser).update({
+            players: firebase.firestore.FieldValue.arrayUnion( idUser )
+        }).then(() => {
+            res.status(200).json({ success: 200 });
+        }).catch(() => {
+            res.status(500).json({ error: err });
+        })
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
+    }
+
+});
 
 router.post('/savePlayerInformation', async (req, res) => {
 
