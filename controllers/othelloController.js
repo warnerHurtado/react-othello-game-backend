@@ -4,7 +4,6 @@ const status = require('http-status');
 
 const firebase = require('firebase-admin')
 const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-2318d0fd23.json');
-const { response } = require('express');
 
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
@@ -143,15 +142,12 @@ async function getPlayerInfo(uid) {
 }
 
 
+async function newGame(createdBy) {
 
-router.get('/newGame', async (req, res) => {
     try {
+        const { uid, displayName } = await getPlayerInfo(createdBy);
 
-        const { uid, displayName } = await getPlayerInfo(req.query.createdBy)
-
-        var db = firebase.firestore();
-
-        db.collection('games').add({
+        return {
             boardGame: boardGenerator(),
             xPlay: true,
             currentPlayer: uid,
@@ -166,40 +162,42 @@ router.get('/newGame', async (req, res) => {
             },
             score: { player1: 2, player2: 2 },
             endedGame: false
-
-        }).then(response => {
-            res.status(status.OK).json({ idGame: response.id });
-        }).catch(err => {
-            res.status(status.INTERNAL_SERVER_ERROR).json(err);
-        });
+        }
 
     } catch (err) {
-        res.status(status.INTERNAL_SERVER_ERROR).json(err);
+        console.log(err)
+        return undefined;
     }
 
-});
+}
+
+
+
 
 router.post('/createRoom', async (req, res) => {
 
-    const owner = req.body.owner;
-    const idOwner = req.body.idOwner;
-
     try {
+
+        const { uid, displayName } = await getPlayerInfo(req.body.idOwner);
+
         var db = firebase.firestore();
 
         db.collection('rooms').add({
-
-            owner:{
-                owner,
-                idOwner
+            owner: {
+                owner: uid,
+                displayName: displayName
             },
-            players: [
-                idOwner
+            roomPlayers: [
+                {
+                    player_id: uid,
+                    player_name: displayName
+                }
             ],
-            games: []
+            roomGames: [
 
-        }).then( response => {
-            res.status(status.OK).json({idRoom: response.id});
+            ]
+        }).then(response => {
+            res.status(status.OK).json({ idRoom: response.id });
         }).catch(err => {
             res.status(status.INTERNAL_SERVER_ERROR).json(err);
         });
@@ -209,35 +207,53 @@ router.post('/createRoom', async (req, res) => {
     }
 });
 
+
 router.post('/addGameRoom', async (req, res) => {
 
     const idRoom = req.body.idRoom;
-
+    const uidUser = req.body.uid;
     try {
 
-        var pool = firebase.firestore();
+        const createdGame = await newGame(uidUser);
 
-        await pool.collection('rooms').doc(idRoom).update({
-            games: firebase.firestore.FieldValue.arrayUnion( idRoom )
-        }).then(() => {
-            res.status(200).json({ success: 200 });
-        }).catch(() => {
-            res.status(500).json({ error: err });
-        })
+        console.log(createdGame)
+
+        if (createdGame) {
+            var pool = firebase.firestore();
+
+            await pool.collection('rooms').doc(idRoom).update({
+
+                roomGames: firebase.firestore.FieldValue.arrayUnion(createdGame)
+
+            }).then(() => {
+                res.status(200).json({ success: 200 });
+            }).catch(() => {
+                res.status(500).json({ error: err });
+            })
+        }
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 })
 
-router.post('/addFriendRoom', async(req, res) => {
-    const idUser = req.body.idUser;
+
+
+
+
+router.post('/addFriendRoom', async (req, res) => {
+
+
     try {
+
+        const idRoom = req.body.idRoom;
+        const { uid, displayName } = await getPlayerInfo(req.body.uid);
+
 
         var pool = firebase.firestore();
 
-        await pool.collection('rooms').doc(idUser).update({
-            players: firebase.firestore.FieldValue.arrayUnion( idUser )
+        await pool.collection('rooms').doc(idRoom).update({
+            roomPlayers: firebase.firestore.FieldValue.arrayUnion({ uid, displayName })
         }).then(() => {
             res.status(200).json({ success: 200 });
         }).catch(() => {
@@ -249,6 +265,9 @@ router.post('/addFriendRoom', async(req, res) => {
     }
 
 });
+
+
+
 
 router.post('/savePlayerInformation', async (req, res) => {
 
@@ -265,7 +284,7 @@ router.post('/savePlayerInformation', async (req, res) => {
             .get()
             .then(snapshot => {
                 snapshot.forEach(async doc => {
-                    if ( await doc.data().uid === uid) {
+                    if (await doc.data().uid === uid) {
                         alreadyExist = false;
                     }
                 });
