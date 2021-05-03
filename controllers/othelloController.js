@@ -4,6 +4,7 @@ const status = require('http-status');
 
 const firebase = require('firebase-admin')
 const serviceAccount = require('../othello-game-2c179-firebase-adminsdk-xbgg6-2318d0fd23.json');
+const { response } = require('express');
 
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
@@ -176,9 +177,41 @@ router.get('/newGame', async (req, res) => {
         res.status(status.INTERNAL_SERVER_ERROR).json(err);
     }
 
-
 });
 
+router.post('/createRoom', async (req, res) => {
+
+    const owner = req.body.owner;
+    const idOwner = req.body.idOwner;
+
+    try {
+        var db = firebase.firestore();
+
+        db.collection('rooms').add({
+
+            owner:{
+                owner,
+                idOwner
+            },
+            players: [
+                idOwner
+            ],
+            games: []
+
+        }).then( response => {
+            res.status(status.OK).json({idRoom: response.id});
+        }).catch(err => {
+            res.status(status.INTERNAL_SERVER_ERROR).json(err);
+        });
+
+    } catch (error) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(err);
+    }
+});
+
+router.post('/editRoom', async (req, res) => {
+
+})
 
 router.post('/savePlayerInformation', async (req, res) => {
 
