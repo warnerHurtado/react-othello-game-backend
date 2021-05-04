@@ -242,18 +242,16 @@ router.post('/addFriendRoom', async (req, res) => {
     try {
 
         const idRoom = req.body.params.idRoom;
-        const { uid, displayName } = await getPlayerInfo(req.body.params.uid);
-
-
+        const usersCollection = JSON.parse(req.body.params.usersCollection);
+        
         var pool = firebase.firestore();
-
-        await pool.collection('rooms').doc(idRoom).update({
-            roomPlayers: firebase.firestore.FieldValue.arrayUnion({player_id: uid, player_name: displayName })
-        }).then(() => {
-            res.status(200).json({ success: 200 });
-        }).catch(() => {
-            res.status(500).json({ error: err });
+        usersCollection.forEach(async user => {
+            await pool.collection('rooms').doc(idRoom).update({
+                roomPlayers: firebase.firestore.FieldValue.arrayUnion({ player_id: user.uid, player_name: user.displayName })
+            })
         })
+
+        res.status(200).json({ success: 200 });
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
@@ -298,7 +296,7 @@ router.get('/getGamersOfRoom', async (req, res) => {
 
         var playersRoom = [];
         response.forEach(doc => {
-            if( doc.id === roomId){
+            if (doc.id === roomId) {
                 doc.data().roomPlayers.forEach(data => {
                     playersRoom.push(data);
                 });
@@ -323,7 +321,7 @@ router.get('/getGamesOfRoom', async (req, res) => {
 
         var playersRoom = [];
         response.forEach(doc => {
-            if( doc.id === roomId){
+            if (doc.id === roomId) {
                 doc.data().roomGames.forEach(data => {
                     playersRoom.push(data);
                 });
