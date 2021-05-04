@@ -212,34 +212,27 @@ router.post('/createRoom', async (req, res) => {
 
 router.post('/addGameRoom', async (req, res) => {
 
-    const idRoom = req.body.idRoom;
-    const uidUser = req.body.uid;
+    const idRoom = req.body.params.idRoom;
+    const idGame = req.body.params.idGame;
     try {
 
-        const createdGame = await newGame(uidUser);
+        var pool = firebase.firestore();
 
-        console.log(createdGame)
+        await pool.collection('rooms').doc(idRoom).update({
 
-        if (createdGame) {
-            var pool = firebase.firestore();
+            roomGames: firebase.firestore.FieldValue.arrayUnion({idGame: idGame})
 
-            await pool.collection('rooms').doc(idRoom).update({
-
-                roomGames: firebase.firestore.FieldValue.arrayUnion(createdGame)
-
-            }).then(() => {
-                res.status(200).json({ success: 200 });
-            }).catch(() => {
-                res.status(500).json({ error: err });
-            })
-        }
+        }).then(() => {
+            res.status(200).json({ success: 200 });
+        }).catch(() => {
+            res.status(500).json({ error: err });
+        })
+    
 
     } catch (err) {
         res.status(status.INTERNAL_SERVER_ERROR).json({ error: err });
     }
 })
-
-
 
 
 
@@ -268,7 +261,6 @@ router.post('/addFriendRoom', async (req, res) => {
 
 });
 
-
 router.get('/getRoomsForId', async (req, res) => {
 
     const playerId = req.query.playerId;
@@ -282,7 +274,6 @@ router.get('/getRoomsForId', async (req, res) => {
         response.forEach(doc => {
 
             doc.data().roomPlayers.forEach(data => {
-                //console.log(data.player_id);
                 if (data.player_id === playerId){
                     gamesRoom.push(doc.id);
                 }
@@ -347,6 +338,40 @@ router.get('/getGamesOfRoom', async (req, res) => {
 });
 
 
+router.get('/newGame', async (req, res) => {
+    try {
+
+        const { uid, displayName } = await getPlayerInfo(req.query.createdBy)
+        var db = firebase.firestore();
+
+        db.collection('games').add({
+            boardGame: boardGenerator(),
+            xPlay: true,
+            currentPlayer: uid,
+            createdAt: Date.now(),
+            player1: {
+                playerId: uid,
+                playerName: displayName
+            },
+            player2: {
+                playerId: null,
+                playerName: null
+            },
+            score: { player1: 2, player2: 2 },
+            endedGame: false
+
+        }).then(response => {
+            res.status(status.OK).json({ idGame: response.id });
+        }).catch(err => {
+            res.status(status.INTERNAL_SERVER_ERROR).json(err);
+        });
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json(err);
+    }
+
+
+});
 
 
 
@@ -357,7 +382,7 @@ router.post('/savePlayerInformation', async (req, res) => {
     const email = req.body.params.email;
 
     try {
-
+        
         var pool = firebase.firestore();
         var alreadyExist = true;
 
@@ -516,6 +541,8 @@ router.get('/getGame', async (req, res) => {
         const idGame = req.query.idGame;
 
         if (idGame) {
+
+            console.log(idGame, 'ELLL ID')
             const gameRef = db.collection('games').doc(idGame);
             const docGame = await gameRef.get();
 
