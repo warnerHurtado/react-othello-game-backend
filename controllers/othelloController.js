@@ -178,9 +178,11 @@ router.post('/createRoom', async (req, res) => {
 
     try {
 
-        const { uid, displayName } = await getPlayerInfo(req.body.idOwner);
+        const { uid, displayName } = await getPlayerInfo(req.body.params.idOwner);
 
         var db = firebase.firestore();
+
+        console.log(uid, 'entre');
 
         db.collection('rooms').add({
             owner: {
@@ -203,7 +205,7 @@ router.post('/createRoom', async (req, res) => {
         });
 
     } catch (error) {
-        res.status(status.INTERNAL_SERVER_ERROR).json(err);
+        res.status(status.INTERNAL_SERVER_ERROR).json(error);
     }
 });
 
@@ -246,14 +248,14 @@ router.post('/addFriendRoom', async (req, res) => {
 
     try {
 
-        const idRoom = req.body.idRoom;
-        const { uid, displayName } = await getPlayerInfo(req.body.uid);
+        const idRoom = req.body.params.idRoom;
+        const { uid, displayName } = await getPlayerInfo(req.body.params.uid);
 
 
         var pool = firebase.firestore();
 
         await pool.collection('rooms').doc(idRoom).update({
-            roomPlayers: firebase.firestore.FieldValue.arrayUnion({ uid, displayName })
+            roomPlayers: firebase.firestore.FieldValue.arrayUnion({player_id: uid, player_name: displayName })
         }).then(() => {
             res.status(200).json({ success: 200 });
         }).catch(() => {
@@ -265,6 +267,85 @@ router.post('/addFriendRoom', async (req, res) => {
     }
 
 });
+
+
+router.get('/getRoomsForId', async (req, res) => {
+
+    const playerId = req.query.playerId;
+
+    try {
+
+        var pool = firebase.firestore();
+        const response = await pool.collection('rooms').get();
+
+        var gamesRoom = [];
+        response.forEach(doc => {
+
+            doc.data().roomPlayers.forEach(data => {
+                //console.log(data.player_id);
+                if (data.player_id === playerId){
+                    gamesRoom.push(doc.id);
+                }
+            });
+        });
+
+        res.status(status.OK).json({ rooms: gamesRoom })
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err })
+    }
+});
+
+router.get('/getGamersOfRoom', async (req, res) => {
+
+    const roomId = req.query.roomId;
+
+    try {
+
+        var pool = firebase.firestore();
+        const response = await pool.collection('rooms').get();
+
+        var playersRoom = [];
+        response.forEach(doc => {
+            if( doc.id === roomId){
+                doc.data().roomPlayers.forEach(data => {
+                    playersRoom.push(data);
+                });
+            }
+        });
+
+        res.status(status.OK).json({ playersRoom: playersRoom })
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err })
+    }
+});
+
+router.get('/getGamesOfRoom', async (req, res) => {
+
+    const roomId = req.query.roomId;
+
+    try {
+
+        var pool = firebase.firestore();
+        const response = await pool.collection('rooms').get();
+
+        var playersRoom = [];
+        response.forEach(doc => {
+            if( doc.id === roomId){
+                doc.data().roomGames.forEach(data => {
+                    playersRoom.push(data);
+                });
+            }
+        });
+
+        res.status(status.OK).json({ gamesRoom: playersRoom })
+
+    } catch (err) {
+        res.status(status.INTERNAL_SERVER_ERROR).json({ error: err })
+    }
+});
+
 
 
 
