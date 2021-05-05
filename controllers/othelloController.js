@@ -129,9 +129,9 @@ async function getPlayerInfo(uid) {
         var pool = firebase.firestore();
         await pool.collection('registeredUsers').where('uid', "==", uid).
             get().then(snapshot => {
+
                 snapshot.forEach(async doc => {
                     user = await doc.data()
-
                 })
             });
 
@@ -144,7 +144,10 @@ async function getPlayerInfo(uid) {
 
 async function newGame(createdBy) {
 
+
     try {
+
+        
         const { uid, displayName } = await getPlayerInfo(createdBy);
 
         return {
@@ -212,14 +215,15 @@ router.post('/createRoom', async (req, res) => {
 
 router.post('/addGameRoom', async (req, res) => {
 
-    const idRoom = req.body.idRoom;
-    const uidUser = req.body.uid;
+    console.log( 'Add game room',req.body  )
+    
+    const idRoom = req.body.params.idRoom;
+    const uidUser = req.body.params.uidUser;
+
     try {
 
         const createdGame = await newGame(uidUser);
-
-        console.log(createdGame)
-
+        
         if (createdGame) {
             var pool = firebase.firestore();
 
@@ -250,6 +254,8 @@ router.post('/addFriendRoom', async (req, res) => {
 
         const idRoom = req.body.params.idRoom;
         const usersCollection = JSON.parse(req.body.params.usersCollection);
+
+        console.log( idRoom, usersCollection )
         
         var pool = firebase.firestore();
         usersCollection.forEach(async user => {
