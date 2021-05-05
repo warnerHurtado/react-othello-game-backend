@@ -435,10 +435,9 @@ router.get('/getPlayerGames', async (req, res) => {
 router.post('/addPlayer', async (req, res) => {
 
     const idGame = req.body.params.idGame;
-
-    console.log(req.body.params.ndPlayer, 'Prueba');
     try {
         const { uid, displayName } = await getPlayerInfo(req.body.params.ndPlayer);
+        console.log(uid,'uid', idGame)
 
         var pool = firebase.firestore();
         await pool.collection('games').doc(idGame).update({
@@ -537,10 +536,9 @@ router.get('/getGame', async (req, res) => {
     try {
         var db = firebase.firestore();
         const idGame = req.query.idGame;
-
+        
         if (idGame) {
 
-            console.log(idGame, 'ELLL ID')
             const gameRef = db.collection('games').doc(idGame);
             const docGame = await gameRef.get();
 
